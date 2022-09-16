@@ -7,7 +7,4 @@ public class CourseStudentException extends IllegalStateException{
         super(message);
     }
 
-    public CourseStudentException(Throwable e) {
-        super(e);
-    }
 }

@@ -9,6 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -22,15 +24,25 @@ public class CourseService {
     @Autowired
     private StudentRepository studentRepository;
 
-    public void saveCourse(Course course) {
+    public Course saveCourse(Course course) {
         log.info("Inside saveCourse method of CourseService");
-        courseRepository.save(course);
-        log.info("Successfully run saveCourse");
+        List<Course> courses = courseRepository.findAll();
+        String courseName = course.getName();
+        for (Course oldCourse: courses) {
+            if (oldCourse.getName().equals(courseName)) {
+                throw new CourseStudentException("Course: " + courseName + " already created.");
+            }
+        }
+        return courseRepository.save(course);
     }
 
-    public Course findCourseById(Long courseId) {
-        log.info("Inside findCourseById method of CourseService");
-        return courseRepository.findByCourseId(courseId);
+    public String checkCourseStatusById(Long courseId) {
+        log.info("Inside checkCourseStatusById method of CourseService");
+        Optional<Course> courseOptional = courseRepository.findById(courseId);
+        if (!courseOptional.isPresent()) {
+            throw new CourseStudentException("Invalid courseId: " + courseId);
+        }
+        return courseOptional.get().getStatus();
     }
 
     public void editCourse(Course course) {
@@ -47,8 +59,8 @@ public class CourseService {
 
     public void deleteByCourseId(Long courseId) {
         log.info("Inside deleteByCourseId method of CourseService");
-        Optional<Course> course = courseRepository.findById(courseId);
-        if (!course.isPresent()) {
+        Optional<Course> courseOptional = courseRepository.findById(courseId);
+        if (!courseOptional.isPresent()) {
             throw new CourseStudentException("Invalid courseId: " + courseId);
         }
         courseRepository.deleteById(courseId);
@@ -64,15 +76,74 @@ public class CourseService {
         return courseOptional.get().getText();
     }
 
-    public void addStudentToCourse(Long courseId, Student student) {
+    public void addStudentToCourse(Long courseId, Long studentId) {
         log.info("Inside addStudentToCourse method of CourseService");
         Optional<Course> courseOptional = courseRepository.findById(courseId);
-        //if not , throw
+        if (!courseOptional.isPresent()) {
+            throw new CourseStudentException("Invalid courseId: " + courseId);
+        }
         Course course = courseOptional.get();
-        Optional<Student> studentOptional = studentRepository.findById(student.getId());
-        //if not
-        Student curStudent = studentOptional.get();
-        course.setStudents((Set<Student>) curStudent);
+        Optional<Student> studentOptional = studentRepository.findById(studentId);
+        if (!studentOptional.isPresent()) {
+            throw new CourseStudentException("Invalid studentId: " + studentId);
+        }
+        Student student = studentOptional.get();
+
+        //check if students already enrolled
+        if (course.isEnrolled(student)) {
+            throw new CourseStudentException("Student: " + studentId + " already enrolled.");
+        }
+        course.enrollStudent(student);
         courseRepository.save(course);
+        log.info("Successfully run addStudentToCourse");
+    }
+
+    public void removeStudentFromCourse(Long courseId, Long studentId) {
+        log.info("Inside removeStudentFromCourse method of CourseService");
+        Optional<Course> courseOptional = courseRepository.findById(courseId);
+        if (!courseOptional.isPresent()) {
+            throw new CourseStudentException("Invalid courseId: " + courseId);
+        }
+        Course course = courseOptional.get();
+        Optional<Student> studentOptional = studentRepository.findById(studentId);
+        if (!studentOptional.isPresent()) {
+            throw new CourseStudentException("Invalid studentId: " + studentId);
+        }
+        Student student = studentOptional.get();
+
+        //check if student has been enrolled
+        if (!course.isEnrolled(student)) {
+            throw new CourseStudentException("Student: " + studentId + " not enrolled");
+        }
+        course.removeStudent(student);
+        courseRepository.save(course);
+        log.info("Successfully run removeStudentFromCourse");
+    }
+
+    public String checkNumberOfStudent(Long courseId) {
+        log.info("Inside checkNumberOfStudent method of CourseService");
+        Optional<Course> courseOptional = courseRepository.findById(courseId);
+        if (!courseOptional.isPresent()) {
+            throw new CourseStudentException("Invalid courseId: " + courseId);
+        }
+        Course course = courseOptional.get();
+        Set<Student> students = course.getEnrolledStudents();
+        return String.valueOf(students.size());
+    }
+
+    public List<Student> checkStudentInfoByCourseId(Long courseId) {
+        log.info("Inside checkStudentInfoByCourseId method of CourseService");
+        Optional<Course> courseOptional = courseRepository.findById(courseId);
+        if (!courseOptional.isPresent()) {
+            throw new CourseStudentException("Invalid courseId: " + courseId);
+        }
+        Course course = courseOptional.get();
+        List<Student> students = new ArrayList<>();
+        students.addAll(course.getEnrolledStudents());
+        return students;
+    }
+
+    public List<Course> getCourses() {
+        return courseRepository.findAll();
     }
 }

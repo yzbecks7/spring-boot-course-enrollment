@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -13,6 +14,7 @@ import java.util.Set;
 @NoArgsConstructor
 @Table(name = "courses")
 public class Course {
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,13 +29,16 @@ public class Course {
     @Column(name = "status")
     private String status;
 
-    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinTable(name = "enrollment", joinColumns = {
-            @JoinColumn(name = "course_id")}, inverseJoinColumns = {
-            @JoinColumn(name = "student_id")})
-    private Set<Student>students;
 
-    public Course(long courseId, String name, String text, String status) {
+    @ManyToMany
+    @JoinTable(
+            name = "enrollment",
+            joinColumns = {@JoinColumn(name = "course_id")},
+            inverseJoinColumns = {@JoinColumn(name = "student_id") }
+            )
+    private Set<Student> enrolledStudents = new HashSet<>();
+
+    public Course(Long courseId, String name, String text, String status) {
         this.courseId = courseId;
         this.name = name;
         this.text = text;
@@ -70,5 +75,21 @@ public class Course {
 
     public void setStatus(String newStatus) {
         this.status = newStatus;
+    }
+
+    public Set<Student> getEnrolledStudents() {
+        return enrolledStudents;
+    }
+
+    public void enrollStudent(Student student) {
+        enrolledStudents.add(student);
+    }
+
+    public void removeStudent(Student student) {
+        enrolledStudents.remove(student);
+    }
+
+    public boolean isEnrolled(Student student) {
+        return enrolledStudents.contains(student);
     }
 }

@@ -1,6 +1,5 @@
 package com.vibrant.demo.controller;
 
-import com.vibrant.demo.entity.Course;
 import com.vibrant.demo.entity.Student;
 import com.vibrant.demo.service.CourseService;
 import com.vibrant.demo.service.StudentService;
@@ -25,9 +24,23 @@ public class StudentController {
         return studentService.saveStudent(student);
     }
 
-    @GetMapping("/{id}")
-    public String getCourseText(@PathVariable("id") Long courseId) {
+    @GetMapping("/getCourseText/{courseId}")
+    public String getCourseText(@PathVariable("courseId") Long courseId) {
         log.info("Inside getCourseText method of StudentController");
         return courseService.getCourseTextById(courseId);
+    }
+
+    @PostMapping("/joinCourse/{courseId}/{studentId}")
+    public String joinCourse(@PathVariable Long courseId, @PathVariable Long studentId) {
+        log.info("Inside joinCourse method of StudentController");
+        studentService.joinCourse(courseId, studentId);
+        return "Successfully join course: " + courseId;
+    }
+
+    @PostMapping("/quitCourse/{courseId}/{studentId}")
+    public String quitCourse(@PathVariable Long courseId, @PathVariable Long studentId) {
+        log.info("Inside quitCourse method of StudentController");
+        studentService.quitCourse(courseId, studentId);
+        return "Successfully quit course: " + courseId;
     }
 }

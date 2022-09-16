@@ -1,7 +1,5 @@
 package com.vibrant.demo.entity;
 
-import java.util.Set;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -28,8 +26,6 @@ public class Student {
     @Column(name = "email")
     private String email;
 
-    @ManyToMany(fetch = FetchType.LAZY, mappedBy = "students", cascade = CascadeType.ALL)
-    private Set<Course> courses;
 
     public Student(long studentId, String name, String gender, String email) {
         this.studentId = studentId;
